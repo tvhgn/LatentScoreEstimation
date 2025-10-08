@@ -1,0 +1,26 @@
+
+       model{
+        sf <- 10 # scale factor
+        
+        for(i in 1:nPaintings){
+          for(j in 1:nPaintings){
+            # Likelihood
+            y[i,j] ~ dbin(theta[i,j], n[i,j])
+            logit(theta[i,j]) <- liking[i] - liking[j]
+          }
+        }
+        # priors
+        # Uninformative priors for all paintings except the first.
+        for (k in 2:nPaintings){
+          liking[k] <- liking_[k] * sf # scaled score
+          liking_[k] ~ dbeta(a[k], b[k])
+          a[k] <- ifelse((mu[k] * kappa) < 1, 1, mu[k] * kappa)
+          b[k] <- ifelse((kappa - a[k]) < 1, 1, kappa - a[k])
+          
+          # Priors over reparameterizations
+          mu[k] ~ dbeta(1,1)
+        }
+        liking[1] <- sf/2 # fix one value in middle of scale to make model identifiable
+        # Hyperprior over kappa
+        kappa ~ dunif(0.001, 100) # We assume similar confidence for all comparisons
+      }
